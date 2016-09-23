@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
+from .formats import parse_rules
 
 WEEKDAYS = (
     ('mon', _('Monday')),
@@ -13,6 +13,14 @@ WEEKDAYS = (
 )
 
 
+class RuleManager(models.Manager):
+
+    def create_from_facebook_data(self, data):
+        parsed_rules = parse_rules(data)
+        instances = [self.model(**r) for r in parsed_rules]
+        self.bulk_create(instances)
+
+
 class Rule(models.Model):
     open = models.CharField(verbose_name=_('Opening time'), max_length=5,
                             default='00:00')
@@ -20,6 +28,8 @@ class Rule(models.Model):
                              default='24:00')
     day = models.CharField(max_length=3, choices=WEEKDAYS)
     nr = models.PositiveSmallIntegerField(default=1)
+
+    objects = RuleManager()
 
     class Meta:
         verbose_name = _('Opening hours rule')
